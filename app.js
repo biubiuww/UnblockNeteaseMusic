@@ -35,7 +35,7 @@ if(config.forceHost && !/\d+\.\d+\.\d+\.\d+/.test(config.forceHost)){
 	process.exit(1)
 }
 if(config.matchOrder){
-	const provider = ['netease', 'qq', 'xiami', 'baidu', 'kugou', 'kuwo', 'migu', 'joox']
+	const provider = ['netease', 'qq', 'xiami', 'baidu', 'kugou', 'kuwo', 'migu', 'joox', 'youtube']
 	const candidate = config.matchOrder
 	if(candidate.some((key, index) => index != candidate.indexOf(key))){
 		console.log('Please check the duplication in match order.')
@@ -56,15 +56,19 @@ const parse = require('url').parse
 const hook = require('./hook')
 const server = require('./server')
 const escape = string => string.replace(/\./g, '\\.')
+const random = array => array[Math.floor(Math.random() * array.length)]
 
 global.port = config.port
 global.proxy = config.proxyUrl ? parse(config.proxyUrl) : null
-global.hosts = {}, hook.target.host.forEach(host => global.hosts[host] = config.forceHost)
+global.hosts = hook.target.host.reduce((result, host) => Object.assign(result, {[host]: config.forceHost}), {})
 server.whitelist = ['music.126.net', 'vod.126.net'].map(escape)
 if(config.strict) server.blacklist.push('.*')
 server.authentication = config.token || null
 global.endpoint = config.endpoint
 if(config.endpoint) server.whitelist.push(escape(config.endpoint))
+
+hosts['music.httpdns.c.163.com'] = random(['59.111.181.35', '59.111.181.38'])
+hosts['httpdns.n.netease.com'] = random(['59.111.179.213', '59.111.179.214'])
 
 const dns = host => new Promise((resolve, reject) => require('dns').lookup(host, {all: true}, (error, records) => error ? reject(error) : resolve(records.map(record => record.address))))
 const httpdns = host => require('./request')('POST', 'https://music.httpdns.c.163.com/d', {}, host).then(response => response.json()).then(jsonBody => jsonBody.dns.reduce((result, domain) => result.concat(domain.ips), []))
