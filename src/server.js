@@ -102,6 +102,10 @@ const proxy = {
 		request: ctx => new Promise((resolve, reject) => {
 			if (ctx.decision === 'close') return reject(ctx.error = ctx.decision)
 			const {req} = ctx
+			if (req.url.includes('bilivideo.com')) {
+				req.headers['referer'] = 'https://www.bilibili.com/'
+				req.headers['user-agent'] = 'okhttp/3.4.1'
+			}
 			const url = parse(req.url)
 			const options = request.configure(req.method, url, req.headers)
 			ctx.proxyReq = request.create(url)(options)
@@ -157,9 +161,11 @@ const proxy = {
 	}
 }
 
+const cert = process.env.SIGN_CERT || path.join(__dirname, '..', 'server.crt')
+const key = process.env.SIGN_KEY || path.join(__dirname, '..', 'server.key')
 const options = {
-	key: fs.readFileSync(path.join(__dirname, '..', 'server.key')),
-	cert: fs.readFileSync(path.join(__dirname, '..', 'server.crt'))
+	key: fs.readFileSync(key),
+	cert: fs.readFileSync(cert)
 }
 
 const server = {
